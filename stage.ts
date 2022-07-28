@@ -8,7 +8,7 @@ const runStages = () => {
   }
 };
 
-const runStage = <S extends Stage<any>>(
+const runStage = <S extends Stage<any, any>>(
   cy: any,
   stage: S,
   previousState: PreviousState<S>,
@@ -52,7 +52,7 @@ export const stage = <A, B = A, C = B>(stage: Stage<A, B, C>) => stage;
 
 // Mutate the DOM `cy` and note that transform on the state `S`, returning either the newly reflected state or state and any assertions that need to be run at the end of this stage.
 // Do *not* mutate `state` or `previousState`, instead return any changes to `state` (i.e. like React state).
-export type Transform<S extends Stage<any>> = (
+export type Transform<S extends Stage<any, any>> = (
   cy: any,
   state: TransformState<S>,
   previousState: PreviousState<S>
@@ -83,24 +83,14 @@ type PreTransformState<S> = S extends Stage<infer A, any, any> ? A : never;
 type TransformState<S> = S extends Stage<any, infer A, any> ? A : never;
 type PreFinalState<S> = S extends Stage<any, any, infer A> ? A : never;
 
-type StageKey<S> = S extends Stage<any> ? S["key"] : never;
-
-type PreviousState<S extends Stage<any>> = UnionizeIntersection<
-  PreFinalState<UnionizeTuple<Preceding<S, typeof stages>>>
+type StageKey<S> = S extends Stage<infer K, any> ? K : never;
+type Stages = typeof stages;
+type PreviousState<S extends Stage<any, any>> = UnionizeIntersection<
+  PreFinalState<UnionizeTuple<Preceding<S, Stages>>>
 >;
 
-type A = PreviousState<typeof uploadStage>;
-type B = StageKey<typeof uploadStage>;
-type C = typeof uploadStage["key"];
-
-// type PreviousState<ST extends Stage<any>> = UnionizeIntersection<{
-//   [K in StageKey<Preceding<ST, typeof stages>>]: PreFinalState<
-//     UnionizeTuple<Preceding<ST, typeof stages>>
-//   >;
-// }>;
-
 // Returned by transforms to run custom assertions specific to that transforms
-type TransformAssertions<S extends Stage<any>> = (
+type TransformAssertions<S extends Stage<any, any>> = (
   cy: any,
   state: TransformState<S>,
   previousState: PreviousState<S>
@@ -110,14 +100,15 @@ type TransformAssertions<S extends Stage<any>> = (
 // State `A` - before any loading has been done.
 // State `B` - after the `preTransform` has run (i.e. page is open). This is the state given to all transforms.
 // State `C` - after the all transforms and `postTransform` have run (i.e. page has submitted). This is the state used by later stages.
-export interface Stage<A, B = A, C = B> {
-  key: string;
+export interface Stage<K extends any, A, B = A, C = B> {
+  key: K;
   initialState: A;
 
   // Setup this stage ready for any transformations (e.g. load the page, insert common values, etc.)
   preTransform: (
     cy: any,
     state: A,
+    // @ts-ignore: complains about recursion occasionally, but not an issue
     previousState: PreviousState<typeof this>
   ) => B;
 

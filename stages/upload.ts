@@ -1,4 +1,4 @@
-import { stage, Stage, Transform } from "../stage";
+import { Stage, Transform } from "../stage";
 
 type UploadTransform = Transform<typeof uploadStage>;
 
@@ -17,7 +17,7 @@ interface UploadState {
   region: Region;
 }
 
-export const uploadStage = stage<{}, UploadState>({
+export const uploadStage: Stage<"upload", {}, UploadState> = {
   key: "upload",
   initialState: {},
   preTransform: (cy, state, prev) => ({
@@ -26,4 +26,4 @@ export const uploadStage = stage<{}, UploadState>({
   }),
   postTransform: (cy, state) => state,
   assertions: () => {},
-} as const);
+};

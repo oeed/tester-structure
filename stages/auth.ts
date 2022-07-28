@@ -4,7 +4,7 @@ interface AuthState {
   userId: number;
 }
 
-export const authStage: Stage<{}, {}, AuthState> = {
+export const authStage: Stage<"auth", {}, {}, AuthState> = {
   key: "auth",
   initialState: {},
   preTransform: (cy, state) => state,
