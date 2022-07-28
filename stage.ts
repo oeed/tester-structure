@@ -1,5 +1,4 @@
 import { stages } from ".";
-import { uploadStage } from "./stages/upload";
 
 export const runStages = (cy: any, stageTransforms: StageTransforms) => {
   let previousState = {};
@@ -112,7 +111,7 @@ type Preceding<V, T> = Last<T> extends never
   ? Pop<T>
   : Preceding<V, Pop<T>>;
 
-/** Size the types of production. */
+/** Seize the types of production. */
 type UnionizeTuple<T extends readonly any[]> = T[number];
 type UnionizeIntersection<T> = (
   T extends any ? (_: T) => void : never

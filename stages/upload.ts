@@ -1,5 +1,6 @@
 import { Stage, Transform } from "../stage";
 import { InputType } from "./upload/inputType";
+import { SrtMode } from "./upload/srtMode";
 
 export type UploadTransform = Transform<typeof uploadStage>;
 
@@ -11,6 +12,7 @@ enum Region {
 interface UploadState {
   inputType: InputType;
   region: Region;
+  srtMode?: SrtMode;
 }
 
 export const uploadStage: Stage<"upload", {}, UploadState> = {

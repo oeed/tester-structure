@@ -20,3 +20,8 @@ export const withRegion =
       },
     ];
   };
+
+export const withAllRegions = [
+  withRegion(Region.orchestration),
+  withRegion(Region.other),
+];
