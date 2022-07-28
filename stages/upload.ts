@@ -1,11 +1,7 @@
 import { Stage, Transform } from "../stage";
+import { InputType } from "./upload/inputType";
 
-type UploadTransform = Transform<typeof uploadStage>;
-
-enum InputType {
-  rtmp,
-  srt,
-}
+export type UploadTransform = Transform<typeof uploadStage>;
 
 enum Region {
   orchestration,

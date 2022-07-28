@@ -48,8 +48,6 @@ const runStage = <S extends Stage<any, any>>(
   return finalState;
 };
 
-export const stage = <A, B = A, C = B>(stage: Stage<A, B, C>) => stage;
-
 // Mutate the DOM `cy` and note that transform on the state `S`, returning either the newly reflected state or state and any assertions that need to be run at the end of this stage.
 // Do *not* mutate `state` or `previousState`, instead return any changes to `state` (i.e. like React state).
 export type Transform<S extends Stage<any, any>> = (
@@ -79,15 +77,17 @@ type UnionizeIntersection<T> = (
   ? I
   : never;
 
-type PreTransformState<S> = S extends Stage<infer A, any, any> ? A : never;
-type TransformState<S> = S extends Stage<any, infer A, any> ? A : never;
-type PreFinalState<S> = S extends Stage<any, any, infer A> ? A : never;
+type PreTransformState<S> = S extends Stage<any, infer A, any, any> ? A : never;
+type TransformState<S> = S extends Stage<any, any, infer A, any> ? A : never;
+type PreFinalState<S> = S extends Stage<any, any, any, infer A> ? A : never;
 
-type StageKey<S> = S extends Stage<infer K, any> ? K : never;
+type StageKey<S extends Stage<string, any>> = S extends Stage<infer K, any>
+  ? K
+  : never;
 type Stages = typeof stages;
-type PreviousState<S extends Stage<any, any>> = UnionizeIntersection<
-  PreFinalState<UnionizeTuple<Preceding<S, Stages>>>
->;
+type PreviousState<S extends Stage<string, any>> = UnionizeIntersection<{
+  [K in UnionizeTuple<Preceding<S, Stages>> as StageKey<K>]: PreFinalState<K>;
+}>;
 
 // Returned by transforms to run custom assertions specific to that transforms
 type TransformAssertions<S extends Stage<any, any>> = (
@@ -100,7 +100,7 @@ type TransformAssertions<S extends Stage<any, any>> = (
 // State `A` - before any loading has been done.
 // State `B` - after the `preTransform` has run (i.e. page is open). This is the state given to all transforms.
 // State `C` - after the all transforms and `postTransform` have run (i.e. page has submitted). This is the state used by later stages.
-export interface Stage<K extends any, A, B = A, C = B> {
+export interface Stage<K extends string, A, B = A, C = B> {
   key: K;
   initialState: A;
 
@@ -125,3 +125,17 @@ export interface Stage<K extends any, A, B = A, C = B> {
     previousState: PreviousState<typeof this>
   ) => void;
 }
+
+const list = [
+  {
+    k: "a",
+    v: 1,
+  },
+  {
+    k: "b",
+    v: 2,
+  },
+] as const;
+
+// want: { a:1, b: 2 }
+type A = { [K in typeof list as "1"]: K };
