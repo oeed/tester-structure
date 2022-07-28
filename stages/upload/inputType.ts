@@ -7,8 +7,10 @@ export enum InputType {
 
 export const withInputType =
   (inputType: InputType): UploadTransform =>
-  (cy, state, global) => {
-    // 'playwrite select input type here'
+  (cy, state, previous) => {
+    // 'playwright select input type here'
+
+    cy.select.inputType();
 
     return [
       {
