@@ -1,21 +1,6 @@
 import { stages } from ".";
 
-export const runStages = (cy: any, stageTransforms: StageTransforms) => {
-  let previousState = {};
-  for (const stage of stages) {
-    previousState = {
-      ...previousState,
-      [stage.key]: runStage(
-        cy,
-        stage,
-        previousState as PreviousState<any>,
-        stageTransforms[stage.key] as unknown as Transform<any>[]
-      ),
-    };
-  }
-};
-
-const runStage = <S extends Stage<any, any>>(
+export const runStage = <S extends Stage<any, any>>(
   cy: any,
   stage: S,
   previousState: PreviousState<S>,
@@ -127,7 +112,7 @@ type StageKey<S extends Stage<string, any>> = S extends Stage<infer K, any>
   ? K
   : never;
 type Stages = typeof stages;
-type PreviousState<S extends Stage<string, any>> = UnionizeIntersection<{
+export type PreviousState<S extends Stage<string, any>> = UnionizeIntersection<{
   [P in UnionizeTuple<Preceding<S, Stages>> as StageKey<P>]: PreFinalState<P>;
 }>;
 

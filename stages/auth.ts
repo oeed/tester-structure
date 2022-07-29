@@ -1,4 +1,6 @@
-import { Stage } from "../stage";
+import { Stage, Transform } from "../stage";
+
+export type AuthTransform = Transform<typeof authStage>;
 
 interface AuthState {
   userId: number;
