@@ -7,18 +7,19 @@ export enum InputType {
 
 export const withInputType =
   (inputType: InputType): UploadTransform =>
-  (cy, state, previous) => {
+  async (cy, state, previous) => {
     // 'playwright select input type here'
 
     cy.select.inputType();
 
-    return [
-      {
+    return {
+      state: {
         ...state,
         inputType,
       },
-      (cy) => {
+      assertions: async (cy) => {
         cy.assert.thing();
       },
-    ];
+      cleanUp: () => {},
+    };
   };

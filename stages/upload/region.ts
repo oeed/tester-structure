@@ -7,18 +7,18 @@ export enum Region {
 
 export const withRegion =
   (region: Region): UploadTransform =>
-  (cy, state, previous) => {
+  async (cy, state, previous) => {
     // 'playwright select region here'
 
-    return [
-      {
+    return {
+      state: {
         ...state,
         region,
       },
-      (cy) => {
+      assertions: async (cy) => {
         cy.assert.thing();
       },
-    ];
+    };
   };
 
 export const withAllRegions = [

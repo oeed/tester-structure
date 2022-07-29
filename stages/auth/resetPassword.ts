@@ -2,14 +2,14 @@ import { AuthTransform } from "../auth";
 
 // Transforms don't have to be created through a function call, that's only needed if they have parameters.
 // This transform always just does one thing.
-export const withResetPassword: AuthTransform = (cy, state, previous) => {
+export const withResetPassword: AuthTransform = async (cy, state, previous) => {
   cy.button("Rest Passord").click();
   // etc...
 
-  return [
+  return {
     state,
-    (cy) => {
+    assertions: async (cy) => {
       cy.assert.thing();
     },
-  ];
+  };
 };

@@ -9,9 +9,10 @@ interface AuthState {
 export const authStage: Stage<"auth", {}, {}, AuthState> = {
   key: "auth",
   initialState: {},
-  preTransform: (cy, state) => state,
-  postTransform: (cy, state) => ({
+  preTransform: async (cy, state) => state,
+  postTransform: async (cy, state) => ({
     userId: 1,
   }),
-  assertions: () => {},
+  assertions: async () => {},
+  cleanUp: async () => {},
 };

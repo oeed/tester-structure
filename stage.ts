@@ -1,13 +1,13 @@
 import { stages } from ".";
 
-export const runStage = <S extends Stage<any, any>>(
+export const runStage = async <S extends Stage<any, any>>(
   cy: any,
   stage: S,
   previousState: PreviousState<S>,
   transforms: Transform<S>[]
-): S => {
+): Promise<S> => {
   // pre transform (load the page, etc.)
-  let transformState = stage.preTransform(
+  let transformState = await stage.preTransform(
     cy,
     stage.initialState,
     previousState as any
@@ -15,18 +15,16 @@ export const runStage = <S extends Stage<any, any>>(
 
   let transformAssertions: TransformAssertions<S>[] = [];
   for (const transform of transforms) {
-    let result = transform(cy, transformState, previousState);
-    if (Array.isArray(result)) {
-      const [resultState, assertions] = result;
-      transformState = resultState;
+    let result = await transform(cy, transformState, previousState);
+    const { assertions, state } = result;
+    transformState = state;
+    if (assertions) {
       transformAssertions.push(assertions);
-    } else {
-      transformState = result;
     }
   }
 
   // post transform (submit, etc.)
-  const finalState = stage.postTransform(
+  const finalState = await stage.postTransform(
     cy,
     transformState,
     previousState as any
@@ -40,13 +38,23 @@ export const runStage = <S extends Stage<any, any>>(
   return finalState;
 };
 
-// Mutate the DOM `cy` and note that transform on the state `S`, returning either the newly reflected state or state and any assertions that need to be run at the end of this stage.
+interface TranformResult<S extends Stage<any, any>> {
+  state: TransformState<S>;
+  assertions?: TransformAssertions<S>;
+  cleanUp?: (
+    cy: any,
+    state: TransformState<S>,
+    previousState: PreviousState<S>
+  ) => void;
+}
+
+// Mutate the DOM `cy` and note that transform on the state `S`, returning either the newly reflected state and any assertions that need to be run at the end of this stage.
 // Do *not* mutate `state` or `previousState`, instead return any changes to `state` (i.e. like React state).
 export type Transform<S extends Stage<any, any>> = (
   cy: any,
   state: TransformState<S>,
   previousState: PreviousState<S>
-) => [TransformState<S>, TransformAssertions<S>] | TransformState<S>;
+) => Promise<TranformResult<S>>;
 
 // `Stage` has three different states, although it can use the state type for all three.
 // State `A` - before any loading has been done.
@@ -60,28 +68,49 @@ export interface Stage<K extends string, A, B = A, C = B> {
   preTransform: (
     cy: any,
     state: A,
-    // @ts-ignore: complains about recursion occasionally, but not an issue
-    previousState: PreviousState<typeof this>
-  ) => B;
+    // @ts-ignore: complains about recursion occasionally, but it's not actually an issue. this can probably be removed
+    previousState: PreviousState<this>
+  ) => Promise<B>;
 
   // Do any final tasks on this page to complete it's job before running assertions (e.g. submit the page)
   postTransform: (
     cy: any,
     state: B,
-    previousState: PreviousState<typeof this>
-  ) => C;
+    previousState: PreviousState<this>
+  ) => Promise<C>;
 
   assertions: (
     cy: any,
     state: C,
-    previousState: PreviousState<typeof this>
-  ) => void;
+    previousState: PreviousState<this>
+  ) => Promise<void>;
+
+  // Clean up any common resources created by this stage.
+  cleanUp: (
+    cy: any,
+    state: C,
+    previousState: PreviousState<this>
+  ) => Promise<void>;
 }
 
 /** The transforms to run for the given stages of a run. */
 export type StageTransforms = {
   [S in UnionizeTuple<typeof stages> as StageKey<S>]: Transform<S>[];
 };
+
+// PreviousState rather exploits TypeScript to a rather large degree to ensure later stages
+// only have previous stages' states. It is a tad fragile though as its recursive, so if
+// types break it'll be because of this.
+export type PreviousState<S extends Stage<string, any>> = UnionizeIntersection<{
+  [P in UnionizeTuple<Preceding<S, Stages>> as StageKey<P>]: PreFinalState<P>;
+}>;
+
+// Returned by transforms to run custom assertions specific to that transforms
+type TransformAssertions<S extends Stage<any, any>> = (
+  cy: any,
+  state: TransformState<S>,
+  previousState: PreviousState<S>
+) => Promise<void>;
 
 /** Get the tuple `T` with the last element removed. */
 type Pop<T> = T extends readonly [...infer A, any] ? A : never;
@@ -112,13 +141,3 @@ type StageKey<S extends Stage<string, any>> = S extends Stage<infer K, any>
   ? K
   : never;
 type Stages = typeof stages;
-export type PreviousState<S extends Stage<string, any>> = UnionizeIntersection<{
-  [P in UnionizeTuple<Preceding<S, Stages>> as StageKey<P>]: PreFinalState<P>;
-}>;
-
-// Returned by transforms to run custom assertions specific to that transforms
-type TransformAssertions<S extends Stage<any, any>> = (
-  cy: any,
-  state: TransformState<S>,
-  previousState: PreviousState<S>
-) => void;

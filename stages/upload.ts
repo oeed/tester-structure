@@ -18,12 +18,12 @@ interface UploadState extends IntermediateUploadState {
 export const uploadStage: Stage<
   "upload",
   {},
-  IntermediateUploadState,
-  UploadState
+  IntermediateUploadState
+  //   UploadState
 > = {
   key: "upload",
   initialState: {},
-  preTransform: (cy, state, prev) => {
+  preTransform: async (cy, state, prev) => {
     cy.openPage("/upload");
     return {
       // the default selected options
@@ -31,14 +31,15 @@ export const uploadStage: Stage<
       region: Region.orchestration,
     };
   },
-  postTransform: (cy, state) => {
+  postTransform: async (cy, state) => {
     return {
       ...state,
       eventId: cy.read("eventId"),
     };
   },
-  assertions: () => {
+  assertions: async () => {
     // assert that the upload was successful
     // e.g. expect(cy.findText("Event created successfully!"))
   },
+  cleanUp: async () => {},
 };

@@ -7,18 +7,18 @@ export enum SrtMode {
 
 export const withSrtMode =
   (srtMode: SrtMode): UploadTransform =>
-  (cy, state, previous) => {
+  async (cy, state, previous) => {
     // 'playwright select input type here'
 
     cy.select.inputType();
 
-    return [
-      {
+    return {
+      state: {
         ...state,
         srtMode,
       },
-      (cy) => {
+      assertions: async (cy) => {
         cy.assert.thing();
       },
-    ];
+    };
   };
